@@ -1,3 +1,4 @@
+import { useState, useEffect, useMemo } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import {
@@ -18,8 +19,24 @@ const STATUS_COLORS = {
 const STATUSES = ['pending', 'confirmed', 'fulfilled', 'cancelled'];
 
 export default function Show({ order }) {
-    const handleStatusChange = (status) => {
-        router.patch(route('orders.update', order.id), { status }, { preserveScroll: true });
+    // Local state gives the Select an immediate value after onChange fires,
+    // avoiding the antd v6 blank-display gap while the Inertia PATCH is in-flight.
+    const [currentStatus, setCurrentStatus] = useState(order.status);
+
+    // Keep in sync if Inertia refreshes props (success or rollback on error).
+    useEffect(() => { setCurrentStatus(order.status); }, [order.status]);
+
+    const statusOptions = useMemo(
+        () => STATUSES.map((s) => ({
+            value: s,
+            label: s.charAt(0).toUpperCase() + s.slice(1),
+        })),
+        [],
+    );
+
+    const handleStatusChange = (newStatus) => {
+        setCurrentStatus(newStatus);
+        router.patch(route('orders.update', order.id), { status: newStatus }, { preserveScroll: true });
     };
 
     const itemColumns = [
@@ -99,14 +116,11 @@ export default function Show({ order }) {
                                 Update Status
                             </Text>
                             <Select
-                                value={order.status}
+                                value={currentStatus}
                                 onChange={handleStatusChange}
                                 style={{ width: '100%' }}
                                 disabled={order.status === 'cancelled'}
-                                options={STATUSES.map((s) => ({
-                                    value: s,
-                                    label: s.charAt(0).toUpperCase() + s.slice(1),
-                                }))}
+                                options={statusOptions}
                             />
                         </div>
                     </Card>

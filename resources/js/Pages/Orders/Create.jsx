@@ -13,6 +13,7 @@ const { Title, Text } = Typography;
 export default function Create({ products }) {
     const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
 
+    // Stable options reference — prevents antd from re-evaluating on every render
     const productOptions = useMemo(
         () => products.map((p) => ({
             value: p.id,
@@ -21,14 +22,25 @@ export default function Create({ products }) {
         [products],
     );
 
-    const { data, setData, post, processing, errors } = useForm({
+    // Each item stores the full { value, label } object for the product so that
+    // antd v6's Select can display the label without a secondary options lookup.
+    // transform() converts back to { product_id, quantity } before the POST.
+    const { data, setData, post, processing, errors, transform } = useForm({
         customer_name: '',
         phone:         '',
-        items:         [],
+        items:         [],  // shape: { product: null | { value: id, label: "…" }, quantity: 1 }
     });
 
+    transform((d) => ({
+        ...d,
+        items: d.items.map(({ product, quantity }) => ({
+            product_id: product?.value ?? null,
+            quantity,
+        })),
+    }));
+
     const addItem = () =>
-        setData('items', [...data.items, { product_id: null, quantity: 1 }]);
+        setData('items', [...data.items, { product: null, quantity: 1 }]);
 
     const updateItem = (index, field, value) => {
         const updated = [...data.items];
@@ -40,7 +52,7 @@ export default function Create({ products }) {
         setData('items', data.items.filter((_, i) => i !== index));
 
     const orderTotal = data.items.reduce((sum, item) => {
-        const p = item.product_id ? productMap[item.product_id] : null;
+        const p = item.product ? productMap[item.product.value] : null;
         return sum + (p ? Number(p.price) * (item.quantity || 0) : 0);
     }, 0);
 
@@ -127,7 +139,8 @@ export default function Create({ products }) {
                             </div>
                         ) : (
                             data.items.map((item, idx) => {
-                                const product   = item.product_id ? productMap[item.product_id] : null;
+                                // item.product is { value: id, label: "..." } or null
+                                const product   = item.product ? productMap[item.product.value] : null;
                                 const lineTotal = product
                                     ? Number(product.price) * (item.quantity || 0)
                                     : 0;
@@ -141,13 +154,13 @@ export default function Create({ products }) {
                                     >
                                         <Col xs={24} sm={12}>
                                             <Select
-                                                value={item.product_id}
-                                                onChange={(v) => updateItem(idx, 'product_id', v)}
+                                                labelInValue
+                                                value={item.product}
+                                                onChange={(opt) => updateItem(idx, 'product', opt)}
                                                 placeholder="Select product…"
                                                 style={{ width: '100%' }}
                                                 showSearch
                                                 optionFilterProp="label"
-                                                optionLabelProp="label"
                                                 status={errors[`items.${idx}.product_id`] ? 'error' : ''}
                                                 options={productOptions}
                                             />
