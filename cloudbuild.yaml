@@ -1,0 +1,66 @@
+# Cloud Build pipeline — triggered on every push to `main`.
+# Builds the Docker image, pushes it to Artifact Registry, then deploys to Cloud Run.
+#
+# One-time setup (run these in Cloud Shell or gcloud CLI):
+#
+#   PROJECT=inventory-app-488412
+#   SA="${PROJECT_NUMBER}@cloudbuild.gserviceaccount.com"   # get PROJECT_NUMBER from `gcloud projects describe $PROJECT`
+#   gcloud projects add-iam-policy-binding $PROJECT --member="serviceAccount:$SA" --role="roles/run.admin"
+#   gcloud projects add-iam-policy-binding $PROJECT --member="serviceAccount:$SA" --role="roles/iam.serviceAccountUser"
+#
+# Then create the trigger via GCP Console → Cloud Build → Triggers → Create trigger:
+#   Source: your GitHub repo, branch: ^main$
+#   Config: Cloud Build config file — /cloudbuild.yaml
+#   Add all required substitutions below.
+
+substitutions:
+  _REGION:   europe-west3
+  _REPO:     inventory-app          # Artifact Registry repo name
+  _IMAGE:    inventory-app          # image name inside the repo
+  _SERVICE:  inventory-app          # Cloud Run service name
+  # Env vars are injected at deploy time via --set-env-vars / --update-secrets.
+  # Never put secrets in this file.
+
+steps:
+  # ── 1. Build the image ────────────────────────────────────────────────────
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA
+      - --tag
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+      - --cache-from
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+      - .
+    id: build
+
+  # ── 2. Push both tags ─────────────────────────────────────────────────────
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - --all-tags
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}
+    id: push
+    waitFor: [build]
+
+  # ── 3. Deploy to Cloud Run ────────────────────────────────────────────────
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --quiet
+    id: deploy
+    waitFor: [push]
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$SHORT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+
+options:
+  logging: CLOUD_LOGGING_ONLY
