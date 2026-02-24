@@ -1,0 +1,41 @@
+/* ── Palette design tokens (CSS variables) ────────────────────────── */
+:root {
+    --color-dark:       #353535;
+    --color-teal:       #3C6E71;
+    --color-white:      #FFFFFF;
+    --color-light-gray: #D9D9D9;
+    --color-deep-blue:  #284B63;
+}
+
+/*
+ * Minimal browser reset — needed because Tailwind preflight is disabled
+ * (we turned it off so it doesn't fight Ant Design's component styles).
+ * Ant Design's CSS-in-JS handles component-level resets internally.
+ */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    font-family: 'Figtree', ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #F0F2F5;
+}
+
+#app {
+    height: 100%;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
