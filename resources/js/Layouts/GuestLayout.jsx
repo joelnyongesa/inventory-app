@@ -3,14 +3,45 @@ import { Link } from '@inertiajs/react';
 
 export default function GuestLayout({ children }) {
     return (
-        <div className="flex min-h-screen flex-col items-center bg-gray-100 pt-6 sm:justify-center sm:pt-0">
-            <div>
+        <div
+            style={{
+                display:        'flex',
+                minHeight:      '100vh',
+                flexDirection:  'column',
+                alignItems:     'center',
+                justifyContent: 'center',
+                background:     '#F0F2F5',
+                padding:        '24px 16px',
+            }}
+        >
+            <div style={{ marginBottom: 20, textAlign: 'center' }}>
                 <Link href="/">
-                    <ApplicationLogo className="h-20 w-20 fill-current text-gray-500" />
+                    <ApplicationLogo style={{ width: 64, height: 64 }} />
                 </Link>
+                <p
+                    style={{
+                        marginTop:     8,
+                        fontSize:      11,
+                        fontWeight:    700,
+                        color:         '#284B63',
+                        letterSpacing: 2,
+                        textTransform: 'uppercase',
+                    }}
+                >
+                    Inventory Management
+                </p>
             </div>
 
-            <div className="mt-6 w-full overflow-hidden bg-white px-6 py-4 shadow-md sm:max-w-md sm:rounded-lg">
+            <div
+                style={{
+                    width:        '100%',
+                    maxWidth:     420,
+                    background:   '#fff',
+                    borderRadius: 10,
+                    padding:      '28px 32px',
+                    boxShadow:    '0 4px 16px rgba(0,0,0,0.09)',
+                }}
+            >
                 {children}
             </div>
         </div>
