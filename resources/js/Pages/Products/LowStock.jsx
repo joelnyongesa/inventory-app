@@ -1,8 +1,10 @@
+import { useRef } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
-import { Table, Tag, Typography, Badge, Button, Flex, Space, Tooltip, Empty, Skeleton } from 'antd';
+import { Table, Tag, Typography, Badge, Button, Flex, Space, Tooltip, Empty, Skeleton, Tour } from 'antd';
 import { AlertOutlined, EditOutlined } from '@ant-design/icons';
 import usePageLoading from '@/hooks/usePageLoading';
+import { usePageTour } from '@/hooks/useTour';
 
 function LowStockSkeleton() {
     return (
@@ -16,6 +18,25 @@ const { Title, Text } = Typography;
 
 export default function LowStock({ products }) {
     const loading = usePageLoading();
+
+    const tableRef = useRef(null);
+
+    const { open: tourOpen, finish: finishTour } = usePageTour('lowstock', loading);
+
+    const tourSteps = [
+        {
+            title: 'Low Stock Items',
+            description: 'This page lists every product that has dropped below its reorder level. "Current Stock" shows what\'s on hand; "Deficit" tells you exactly how many units to reorder.',
+            target: () => tableRef.current,
+            placement: 'top',
+        },
+        {
+            title: 'Restock a Product',
+            description: 'Click the edit icon on any row to open that product and update its stock count.',
+            target: () => tableRef.current?.querySelector('.ant-table-tbody .ant-btn'),
+            placement: 'left',
+        },
+    ];
 
     const columns = [
         {
@@ -100,10 +121,13 @@ export default function LowStock({ products }) {
             <Head title="Low Stock" />
 
             {loading ? <LowStockSkeleton /> : (
-            <div style={{
-                background: '#fff', borderRadius: 8,
-                padding: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            }}>
+            <div
+                ref={tableRef}
+                style={{
+                    background: '#fff', borderRadius: 8,
+                    padding: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
+                }}
+            >
                 {products.total === 0 ? (
                     <Empty
                         description={
@@ -126,6 +150,15 @@ export default function LowStock({ products }) {
                 )}
             </div>
             )}
+
+            <Tour
+                open={tourOpen}
+                onClose={finishTour}
+                onFinish={finishTour}
+                steps={tourSteps}
+                scrollIntoViewOptions={{ behavior: 'smooth', block: 'center' }}
+                zIndex={1050}
+            />
         </AppLayout>
     );
 }

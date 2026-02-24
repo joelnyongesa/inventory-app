@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import { useNavTour } from '@/hooks/useTour';
 import {
     Layout,
     Menu,
@@ -9,6 +10,7 @@ import {
     Dropdown,
     Typography,
     Drawer,
+    Tour,
     notification,
     theme as antdTheme,
 } from 'antd';
@@ -46,7 +48,7 @@ function SideMenu({ selectedKey, collapsed = false, onNavigate }) {
         key,
         icon,
         label: (
-            <Link href={href} onClick={onNavigate}>
+            <Link href={href} onClick={onNavigate} id={`inv-nav-${key}`}>
                 {label}
             </Link>
         ),
@@ -103,6 +105,11 @@ export default function AppLayout({ children, header }) {
     const [drawerOpen,  setDrawerOpen]  = useState(false);
     const [isMobile,    setIsMobile]    = useState(false);
 
+    const menuToggleRef = useRef(null);
+    const userAreaRef   = useRef(null);
+
+    const { open: navTourOpen, finish: finishNavTour, dismiss: dismissNavTour } = useNavTour();
+
     useEffect(() => {
         if (flash?.success) {
             notifApi.success({ message: flash.success, placement: 'topRight', duration: 3 });
@@ -149,12 +156,74 @@ export default function AppLayout({ children, header }) {
 
     const userInitial = auth?.user?.name?.charAt(0)?.toUpperCase() ?? 'U';
 
+    // ── Navigation tour steps ─────────────────────────────────────────────
+    const navTourSteps = isMobile
+        ? [
+            {
+                title: 'Navigation Menu',
+                description: 'Tap this icon to open the navigation drawer and jump to any section of the app.',
+                target: () => menuToggleRef.current,
+                placement: 'bottomLeft',
+            },
+            {
+                title: 'Your Account',
+                description: 'Tap here to view your profile or log out.',
+                target: () => userAreaRef.current,
+                placement: 'bottomRight',
+            },
+        ]
+        : [
+            {
+                title: 'Navigation Sidebar',
+                description: 'This sidebar is your main navigation hub. Use it to move between all sections of the app.',
+                target: () => document.getElementById('inv-sider'),
+                placement: 'right',
+            },
+            {
+                title: 'Dashboard',
+                description: "Get a bird's-eye view of your inventory — key metrics, recent orders, and stock alerts.",
+                target: () => document.getElementById('inv-nav-dashboard'),
+                placement: 'right',
+            },
+            {
+                title: 'Products',
+                description: 'Add, edit, and manage your entire product catalog from here.',
+                target: () => document.getElementById('inv-nav-products'),
+                placement: 'right',
+            },
+            {
+                title: 'Orders',
+                description: 'Create and track customer orders through their full lifecycle.',
+                target: () => document.getElementById('inv-nav-orders'),
+                placement: 'right',
+            },
+            {
+                title: 'Low Stock Alerts',
+                description: 'Keep an eye on which products are running low and need restocking before they run out.',
+                target: () => document.getElementById('inv-nav-low-stock'),
+                placement: 'right',
+            },
+            {
+                title: 'Collapse Sidebar',
+                description: 'Click this button to collapse the sidebar and gain more screen space when you need it.',
+                target: () => menuToggleRef.current,
+                placement: 'right',
+            },
+            {
+                title: 'Your Account',
+                description: 'Click here to access your profile settings or sign out.',
+                target: () => userAreaRef.current,
+                placement: 'bottomRight',
+            },
+        ];
+
     return (
         <Layout style={{ minHeight: '100vh' }}>
             {notifHolder}
 
             {!isMobile && (
                 <Sider
+                    id="inv-sider"
                     collapsible
                     collapsed={collapsed}
                     trigger={null}
@@ -213,6 +282,7 @@ export default function AppLayout({ children, header }) {
                     }}
                 >
                     <Button
+                        ref={menuToggleRef}
                         type="text"
                         icon={
                             isMobile
@@ -232,6 +302,7 @@ export default function AppLayout({ children, header }) {
 
                     <Dropdown menu={userDropdown} placement="bottomRight" arrow>
                         <div
+                            ref={userAreaRef}
                             style={{
                                 display:    'flex',
                                 alignItems: 'center',
@@ -278,6 +349,15 @@ export default function AppLayout({ children, header }) {
                     {children}
                 </Content>
             </Layout>
+
+            <Tour
+                open={navTourOpen}
+                onClose={dismissNavTour}
+                onFinish={finishNavTour}
+                steps={navTourSteps}
+                scrollIntoViewOptions={{ behavior: 'smooth', block: 'center' }}
+                zIndex={1050}
+            />
         </Layout>
     );
 }

@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Head, Link, router } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import {
     Table, Button, Input, Select, Tag, Space,
-    Popconfirm, Typography, Row, Col, Tooltip, Skeleton,
+    Popconfirm, Typography, Row, Col, Tooltip, Skeleton, Tour,
 } from 'antd';
 import {
     PlusOutlined, EditOutlined, DeleteOutlined,
     AlertOutlined, SearchOutlined,
 } from '@ant-design/icons';
 import usePageLoading from '@/hooks/usePageLoading';
+import { usePageTour } from '@/hooks/useTour';
 
 const { Title } = Typography;
 
@@ -35,6 +36,33 @@ function ProductsSkeleton() {
 export default function Index({ products, filters }) {
     const loading = usePageLoading();
     const [search, setSearch] = useState(filters.search ?? '');
+
+    const searchRef = useRef(null);
+    const filterRef = useRef(null);
+    const addBtnRef = useRef(null);
+
+    const { open: tourOpen, finish: finishTour } = usePageTour('products', loading);
+
+    const tourSteps = [
+        {
+            title: 'Search Products',
+            description: 'Quickly find a product by typing its name or SKU. Press Enter or click Search to apply.',
+            target: () => searchRef.current,
+            placement: 'bottom',
+        },
+        {
+            title: 'Filter by Status',
+            description: 'Narrow the list to active or inactive products using this dropdown.',
+            target: () => filterRef.current,
+            placement: 'bottom',
+        },
+        {
+            title: 'Add a Product',
+            description: 'Click here to add a new product to your inventory catalog.',
+            target: () => addBtnRef.current,
+            placement: 'bottomRight',
+        },
+    ];
 
     const applyFilters = (overrides = {}) => {
         const params = { search, ...filters, ...overrides };
@@ -149,45 +177,51 @@ export default function Index({ products, filters }) {
             }}>
                 <Row gutter={[12, 12]} style={{ marginBottom: 16 }} align="middle">
                     <Col xs={24} sm={14} md={12}>
-                        <Space.Compact style={{ width: '100%' }}>
-                            <Input
-                                placeholder="Search by name or SKU…"
-                                prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
-                                value={search}
-                                onChange={(e) => {
-                                    setSearch(e.target.value);
-                                    if (!e.target.value) applyFilters({ search: '', page: 1 });
-                                }}
-                                onPressEnter={() => applyFilters({ search, page: 1 })}
-                                allowClear
-                            />
-                            <Button
-                                type="primary"
-                                onClick={() => applyFilters({ search, page: 1 })}
-                            >
-                                Search
-                            </Button>
-                        </Space.Compact>
+                        <div ref={searchRef}>
+                            <Space.Compact style={{ width: '100%' }}>
+                                <Input
+                                    placeholder="Search by name or SKU…"
+                                    prefix={<SearchOutlined style={{ color: '#bfbfbf' }} />}
+                                    value={search}
+                                    onChange={(e) => {
+                                        setSearch(e.target.value);
+                                        if (!e.target.value) applyFilters({ search: '', page: 1 });
+                                    }}
+                                    onPressEnter={() => applyFilters({ search, page: 1 })}
+                                    allowClear
+                                />
+                                <Button
+                                    type="primary"
+                                    onClick={() => applyFilters({ search, page: 1 })}
+                                >
+                                    Search
+                                </Button>
+                            </Space.Compact>
+                        </div>
                     </Col>
 
                     <Col xs={14} sm={6} md={5}>
-                        <Select
-                            value={filters.status || undefined}
-                            onChange={(v) => applyFilters({ status: v ?? 'all', page: 1 })}
-                            placeholder="Filter by status"
-                            style={{ width: '100%' }}
-                            allowClear
-                            options={[
-                                { value: 'active',   label: 'Active products'   },
-                                { value: 'inactive', label: 'Inactive products' },
-                            ]}
-                        />
+                        <div ref={filterRef}>
+                            <Select
+                                value={filters.status || undefined}
+                                onChange={(v) => applyFilters({ status: v ?? 'all', page: 1 })}
+                                placeholder="Filter by status"
+                                style={{ width: '100%' }}
+                                allowClear
+                                options={[
+                                    { value: 'active',   label: 'Active products'   },
+                                    { value: 'inactive', label: 'Inactive products' },
+                                ]}
+                            />
+                        </div>
                     </Col>
 
                     <Col xs={10} sm={4} md={7} style={{ textAlign: 'right' }}>
-                        <Link href={route('products.create')}>
-                            <Button type="primary" icon={<PlusOutlined />}>Add Product</Button>
-                        </Link>
+                        <div ref={addBtnRef} style={{ display: 'inline-block' }}>
+                            <Link href={route('products.create')}>
+                                <Button type="primary" icon={<PlusOutlined />}>Add Product</Button>
+                            </Link>
+                        </div>
                     </Col>
                 </Row>
 
@@ -201,6 +235,15 @@ export default function Index({ products, filters }) {
                 />
             </div>
             )}
+
+            <Tour
+                open={tourOpen}
+                onClose={finishTour}
+                onFinish={finishTour}
+                steps={tourSteps}
+                scrollIntoViewOptions={{ behavior: 'smooth', block: 'center' }}
+                zIndex={1050}
+            />
         </AppLayout>
     );
 }
