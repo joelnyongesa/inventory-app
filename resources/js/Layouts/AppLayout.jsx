@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, router, usePage } from '@inertiajs/react';
+import ApplicationLogo from '@/Components/ApplicationLogo';
 import {
     Layout,
     Menu,
@@ -65,18 +66,21 @@ function SideMenu({ selectedKey, collapsed = false, onNavigate }) {
                     overflow: 'hidden',
                 }}
             >
-                <Text
-                    style={{
-                        color: '#3C6E71',
-                        fontWeight: 700,
-                        fontSize: collapsed ? 13 : 18,
-                        letterSpacing: collapsed ? 0 : 1,
-                        whiteSpace: 'nowrap',
-                        transition: 'font-size 0.2s',
-                    }}
-                >
-                    {collapsed ? 'INV' : 'Inventory'}
-                </Text>
+                {collapsed ? (
+                    <ApplicationLogo style={{ width: 32, height: 32, flexShrink: 0 }} />
+                ) : (
+                    <Text
+                        style={{
+                            color:       '#3C6E71',
+                            fontWeight:  700,
+                            fontSize:    18,
+                            letterSpacing: 1,
+                            whiteSpace:  'nowrap',
+                        }}
+                    >
+                        Inventory
+                    </Text>
+                )}
             </div>
 
             <Menu
