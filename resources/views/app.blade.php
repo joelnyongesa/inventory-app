@@ -4,7 +4,17 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+        <title inertia>{{ config('app.name', 'Inventory') }}</title>
+
+        <!-- SEO -->
+        <meta name="description" content="Inventory Management — track products, orders, and stock levels in real time.">
+        <meta name="robots" content="noindex, nofollow">
+
+        <!-- Open Graph -->
+        <meta property="og:type"        content="website">
+        <meta property="og:title"       content="Inventory Management">
+        <meta property="og:description" content="Track products, orders, and stock levels in real time.">
+        <meta property="og:url"         content="{{ url('/') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
