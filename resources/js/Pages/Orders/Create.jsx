@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import AppLayout from '@/Layouts/AppLayout';
 import {
@@ -11,6 +12,14 @@ const { Title, Text } = Typography;
 
 export default function Create({ products }) {
     const productMap = Object.fromEntries(products.map((p) => [p.id, p]));
+
+    const productOptions = useMemo(
+        () => products.map((p) => ({
+            value: p.id,
+            label: `${p.name}  —  $${Number(p.price).toFixed(2)}`,
+        })),
+        [products],
+    );
 
     const { data, setData, post, processing, errors } = useForm({
         customer_name: '',
@@ -137,14 +146,10 @@ export default function Create({ products }) {
                                                 placeholder="Select product…"
                                                 style={{ width: '100%' }}
                                                 showSearch
-                                                filterOption={(input, option) =>
-                                                    String(option?.label ?? '').toLowerCase().includes(input.toLowerCase())
-                                                }
+                                                optionFilterProp="label"
+                                                optionLabelProp="label"
                                                 status={errors[`items.${idx}.product_id`] ? 'error' : ''}
-                                                options={products.map((p) => ({
-                                                    value: p.id,
-                                                    label: `${p.name}  —  $${Number(p.price).toFixed(2)}`,
-                                                }))}
+                                                options={productOptions}
                                             />
                                         </Col>
 
